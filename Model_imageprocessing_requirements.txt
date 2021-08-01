@@ -1,0 +1,13 @@
+python==3.7.2
+Cython==0.29.17
+matplotlib==2.2.3
+meson==0.57.1
+numpy==1.14.3
+pandas==1.0.5
+Pillow==8.3.1
+pycocotools==2.0.2
+python-dateutil==2.8.1
+six==1.13.0
+torch==1.9.0
+torchvision==0.10.0
+typing-extensions==3.10.0.0
