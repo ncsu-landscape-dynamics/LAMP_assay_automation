@@ -131,24 +131,19 @@ During inference, the model requires only the input tensors, and returns the pos
 img_dir = input("Please provide a directory path that has the images awaiting\
  analysis.\n")
 
-try:
-    os.path.exists(img_dir) == False
-except:
-    sys.exit("The path provided does not exist. Do you need to provide a\
+if os.path.exists(img_dir) == "False":
+    raise TypeError("The path provided does not exist. Do you need to provide a\
     leading '/' (on Windows, you need to provide 'C:\' instead).")
-
-os.chdir(img_dir)
-print(os.getcwd())
 
 # Just base name of file for possibly using as short name in later functions.
 waiting_images = list()
 # Complete path of files
 w_im_dir_read = list()
 
-for file in os.listdir("."):
+for file in os.listdir(img_dir):
     if file.endswith(".png"):
         waiting_images.append( file)
-        w_im_dir_read.append(os.path.join( os.getcwd(), file))
+        w_im_dir_read.append(os.path.join(img_dir, file))
     
 waiting_images = sorted(waiting_images)
 w_im_dir_read = sorted(w_im_dir_read)
@@ -158,7 +153,7 @@ if len(waiting_images) % 2 == 1:
   raise IndexError("Error: odd number of images. Is there a 0 min. image and a 61\
   min. image for each assay?")
 
-print("The following images will be analyzed:{}\n.".format(waiting_images))
+print("The following images will be analyzed:{}\n".format(waiting_images))
 
 img_count = 0
 #/content/drive/MyDrive/APHIS Farm Bill (2020Milestones)/Protocols/For John/images/New set for John/collection/four_chambers/imgs_centercropped
