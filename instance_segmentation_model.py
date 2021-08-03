@@ -32,7 +32,7 @@ import torchvision.transforms.functional as F
 # Check if directory for additional Torch libraries exists
 torchlibs = Path('vision')
 
-if torchlibs.exists == "False":
+if torchlibs.exists() == False:
   Repo.clone_from('https://github.com/John-Polo/vision.git', './vision')
 
 # Torch libraries from further out on the path
