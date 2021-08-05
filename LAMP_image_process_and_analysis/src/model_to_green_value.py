@@ -86,9 +86,16 @@ device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cp
 warnings.filterwarnings("ignore")#, message="UserWarning: Named tensors and all their associated")
 
 # Load the model from the saved file:
-model = torch.load('MaskInstanceModel.pth', map_location=device)
-model.load_state_dict(torch.load('MaskModelParams.pth', map_location=device))
-#model.to(device)
+model = torch.load(<MaskInstanceModel.pth link>, map_location=device) 
+# Going to need to pull these from Google Drive
+# Link to model:
+#https://drive.google.com/file/d/1lwm_By5aCyLnSnmUxMnPEhMEnmu9Ryl_/view?usp=sharing
+model.load_state_dict(torch.load('MaskModelParams.pth', map_location=device)) 
+#... Google Drive
+#https://drive.google.com/file/d/1nzSMfm3QNqhyLQ5HHD5QEiNuCUyw6Hfx/view?usp=sharing
+
+
+model.to(device)
 
 #The output from this can be cleared from the screen. Don't know how to do that.
 model.eval()
