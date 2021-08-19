@@ -4,18 +4,16 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-numpy = "*"
+pandas = "*"
 pillow = "*"
 matplotlib = "*"
-pandas = "*"
 rawpy = "*"
+opencv-python = "*"
+gitpython = "*"
 torch = "*"
 torchvision = "*"
-opencv-python = "*"
-pycocotools = "*"
-gitpython = "*"
 
 [dev-packages]
 
 [requires]
-python_version = "3.7"
+python_version = "3.9"
