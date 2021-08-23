@@ -120,7 +120,8 @@ During inference, the model requires only the input tensors, and returns the pos
 """
 
 # Where are the new images that will need to be analyzed going to be stored?
-img_dir = input("Please provide a directory path that has the images awaiting analysis.\n")
+#img_dir = input("Please provide a directory path that has the images awaiting analysis.\n")
+img_dir = "/content/drive/MyDrive/APHIS Farm Bill (2020Milestones)/Protocols/For John/images/New set for John/collection/four_chambers/imgs_centercropped"
 
 if os.path.exists(img_dir) == "False":
     raise TypeError("The path provided does not exist. Do you need to provide a leading '/' (on Windows, you need to provide 'C:\' instead).")
@@ -145,7 +146,7 @@ if len(waiting_images) % 2 == 1:
 print("The following images will be analyzed:{}\n".format(waiting_images))
 
 img_count = 0
-#/content/drive/MyDrive/APHIS Farm Bill (2020Milestones)/Protocols/For John/images/New set for John/collection/four_chambers/imgs_centercropped
+
 
 # Need a way to check if image have been processed or not. Have to set up a 
 # tracking table.
