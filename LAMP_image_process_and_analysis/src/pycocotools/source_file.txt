@@ -1,0 +1,2 @@
+# This directory comes from the COCOAPI at
+# https://github.com/philferriere/cocoapi

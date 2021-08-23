@@ -14,14 +14,13 @@ from PIL import Image
 import matplotlib.pyplot as plt
 import random
 import cv2
-import pycocotools
+#import pycocotools
 import warnings
 import sys
 import pandas as pd
-import warnings
 import re
-from git import Repo
-from pathlib import Path
+#from git import Repo
+#from pathlib import Path
 
 ## Torch libraries
 import torch
@@ -33,19 +32,25 @@ from torchvision.io import read_image
 from torchvision.transforms.functional import convert_image_dtype
 import torchvision.transforms.functional as F
 
+### Next 15 lines don't seem necessary for model.eval()
+### They will probably be necessary for model.train()
 # Check if directory for additional Torch libraries exists
-torchlibs = Path('vision')
+#torchlibs = Path('vision')
 
-if torchlibs.exists() == False:
-  Repo.clone_from('https://github.com/John-Polo/vision.git', './vision')
+#if torchlibs.exists() == False:
+#  print('Need a git clone of https://github.com/John-Polo/vision.git in "./vision" ')
+
+#git.Git(".").clone("https://github.com/philferriere/cocoapi.git#subdirectory=PythonAPI")
 
 # Torch libraries from further out on the path
-from vision.references.detection import utils
-from vision.references.detection import transforms
-from vision.references.detection import coco_eval
-from vision.references.detection import engine
-from vision.references.detection import coco_utils
-#
+#from vision.references.detection import utils
+#from vision.references.detection import transforms
+#from vision.references.detection import coco_eval
+#from vision.references.detection import engine
+#from vision.references.detection import coco_utils
+###
+
+# Colab setting
 #from google.colab import drive
 #drive.mount('/content/drive', force_remount=True)
 ##
@@ -86,16 +91,9 @@ device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cp
 warnings.filterwarnings("ignore")#, message="UserWarning: Named tensors and all their associated")
 
 # Load the model from the saved file:
-model = torch.load(<MaskInstanceModel.pth link>, map_location=device) 
-# Going to need to pull these from Google Drive
-# Link to model:
-#https://drive.google.com/file/d/1lwm_By5aCyLnSnmUxMnPEhMEnmu9Ryl_/view?usp=sharing
-model.load_state_dict(torch.load('MaskModelParams.pth', map_location=device)) 
-#... Google Drive
-#https://drive.google.com/file/d/1nzSMfm3QNqhyLQ5HHD5QEiNuCUyw6Hfx/view?usp=sharing
-
-
-model.to(device)
+model = torch.load('MaskInstanceModel.pth', map_location=device)
+model.load_state_dict(torch.load('MaskModelParams.pth', map_location=device))
+#model.to(device)
 
 #The output from this can be cleared from the screen. Don't know how to do that.
 model.eval()
@@ -122,12 +120,10 @@ During inference, the model requires only the input tensors, and returns the pos
 """
 
 # Where are the new images that will need to be analyzed going to be stored?
-img_dir = input("Please provide a directory path that has the images awaiting\
- analysis.\n")
+img_dir = input("Please provide a directory path that has the images awaiting analysis.\n")
 
 if os.path.exists(img_dir) == "False":
-    raise TypeError("The path provided does not exist. Do you need to provide a\
-    leading '/' (on Windows, you need to provide 'C:\' instead).")
+    raise TypeError("The path provided does not exist. Do you need to provide a leading '/' (on Windows, you need to provide 'C:\' instead).")
 
 # Just base name of file for possibly using as short name in later functions.
 waiting_images = list()
@@ -144,8 +140,7 @@ w_im_dir_read = sorted(w_im_dir_read)
         
 # Check for even number of images. Otherwise, a 00 or 61 is probably missing.
 if len(waiting_images) % 2 == 1:
-  raise IndexError("Error: odd number of images. Is there a 0 min. image and a 61\
-  min. image for each assay?")
+  raise IndexError("Error: odd number of images. Is there a 0 min. image and a 61 min. image for each assay?")
 
 print("The following images will be analyzed:{}\n".format(waiting_images))
 
