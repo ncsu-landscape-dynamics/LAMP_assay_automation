@@ -11,5 +11,3 @@ RUN pip3 install -r requirements.txt
 COPY . .
 
 CMD [ "python3", "image_ingestion_crop_save.py" ]
-
-CMD [ "python3", "model_to_green_value.py" ]
