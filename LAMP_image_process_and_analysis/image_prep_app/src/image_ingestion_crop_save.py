@@ -2,7 +2,7 @@
 """readDNGsavePNG
 """
 
-# Prelimns
+# Prelims
 import numpy as np
 import os
 from PIL import Image
@@ -58,13 +58,19 @@ raw_in_list = list()
 post_im_list = list()
 
 for r in range(len(rawimgs_dir)):
-    raw_in_list.append(rawpy.imread(rawimgs_dir[r]))
-    post_im_list.append(raw_in_list[r].postprocess(use_camera_wb=True))
-    if post_im_list[r].shape[0] < post_im_list[r].shape[1]:
-        post_im_list[r] = np.rot90(post_im_list[r], 3)
-        print("Note: horizontal images detected. Inspect orientation.")
+    if rawimgs_dir[r].endswith('dng'):
+        raw_in_list.append(rawpy.imread(rawimgs_dir[r]))
+        post_im_list.append(raw_in_list[r].postprocess(use_camera_wb=True))
+        if post_im_list[r].shape[0] < post_im_list[r].shape[1]:
+            post_im_list[r] = np.rot90(post_im_list[r], 3)
+            print("Note: horizontal images detected. Inspect orientation.")
+    else:
+        post_im_list.append(Image.open(rawimgs[r]))
+        if post_im_list[r].size[0] < post_im_list[r].size[1]:
+            post_im_list[r] = post_im_list[r].rotate(90)
+            print("Note: horizontal images detected. Inspect orientation.")
 
-# Save images as PNG full-size. 
+# Save images as PNG full-size.
 dir_save = input("Please provide a directory path for saving full-size images.\n")
 
 if os.path.exists(dir_save) == False:
@@ -104,7 +110,7 @@ def centercrop(img, newsize):
 cencrop_lis = list()
 
 for i in range(len(post_im_list)):
-    cencrop_lis.append(centercrop(post_im_list[i], 1600))
+    cencrop_lis.append(centercrop(post_im_list[i], 1900))
 
 # For saving the cropped images.
 newnamelis = list()
