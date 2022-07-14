@@ -44,7 +44,7 @@ if os.path.exists(img_dir) == False:
   raise TypeError("The path provided does not exist. Do you need to provide a\
   leading '/' (on Windows, you need to provide 'C:\' instead).")
 
-print("The directory provided was {}.".format(os.getcwd()))
+print("The directory provided was {}.".format(img_dir))
 
 # Names and locations of images for reading.
 rawimgs = sorted(os.listdir(img_dir))
@@ -65,8 +65,8 @@ for r in range(len(rawimgs_dir)):
             post_im_list[r] = np.rot90(post_im_list[r], 3)
             print("Note: horizontal images detected. Inspect orientation.")
     else:
-        post_im_list.append(Image.open(rawimgs[r]))
-        if post_im_list[r].size[0] < post_im_list[r].size[1]:
+        post_im_list.append(Image.open(rawimgs_dir[r]))
+        if post_im_list[r].size[0] > post_im_list[r].size[1]:
             post_im_list[r] = post_im_list[r].rotate(90)
             print("Note: horizontal images detected. Inspect orientation.")
 
@@ -77,15 +77,24 @@ if os.path.exists(dir_save) == False:
     new_dir_response = input("Directory does not exist. Should it be created? [Yes or No] If so, we will use {}\n".format(dir_save)) or "No"
     if new_dir_response == "Yes":
       os.mkdir(dir_save)
-  
+
 newnamelis = list()
 save_names_path = list()
 
 for i in range(len(rawimgs)):
-    newnamelis.append(rawimgs[i].replace("dng","png"))
-    save_names_path.append(os.path.join(dir_save, newnamelis[i]))
-    post_im_list[i] = Image.fromarray(post_im_list[i])
-    post_im_list[i].save(save_names_path[i])
+    if rawimgs[i].endswith('dng'):
+        newnamelis.append(rawimgs[i].replace("dng","png"))
+        save_names_path.append(os.path.join(dir_save, newnamelis[i]))
+        post_im_list[i] = Image.fromarray(post_im_list[i])
+        post_im_list[i].save(save_names_path[i])
+    elif rawimgs[i].endswith('jpg'):
+        newnamelis.append(rawimgs[i].replace("jpg","png"))
+        save_names_path.append(os.path.join(dir_save, newnamelis[i]))
+        post_im_list[i].save(save_names_path[i])
+    else:
+        newnamelis.append(rawimgs[i])
+        save_names_path.append(os.path.join(dir_save, newnamelis[i]))
+        post_im_list[i].save(save_names_path[i])
 
 # The if statement here is dodgy. An array or tensor has shape AND size. Only
 # the PIL Images have only shape. Tried using type(img), but that's only for
@@ -129,6 +138,7 @@ for i in range(len(rawimgs)):
     crop_names_path.append(os.path.join(crop_save, newnamelis[i]))
     cencrop_lis[i].save(crop_names_path[i])
 
+print("complete")
 # Write out a bunch of plt. statements because I don't know how to call plt in a loop.
 #for i in range(len(post_im_list)):
 #    colus = int(len(post_im_list)/6)
