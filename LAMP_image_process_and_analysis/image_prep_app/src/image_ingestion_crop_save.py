@@ -10,14 +10,6 @@ import matplotlib.pyplot as plt
 import pandas as pd
 #!pip install rawpy # <- Google colab format
 import rawpy
-#
-#
-# Not necessary currently. 
-#import cv2
-#import imageio
-#import scipy.misc
-#import skimage.filters
-#import skimage.metrics
 
 # Likely not needed
 #from google.colab import drive
@@ -28,11 +20,6 @@ import rawpy
 import torch
 import torch.utils.data
 import torchvision
-#from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
-#from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
-#from torchvision.io import read_image
-#from torchvision.transforms.functional import convert_image_dtype
-#import torchvision.transforms.functional as F
 
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
@@ -57,17 +44,18 @@ for i in range(len(rawimgs)):
 raw_in_list = list()
 post_im_list = list()
 
-for r in range(len(rawimgs_dir)):
-    if rawimgs_dir[r].endswith('dng'):
-        raw_in_list.append(rawpy.imread(rawimgs_dir[r]))
-        post_im_list.append(raw_in_list[r].postprocess(use_camera_wb=True))
-        if post_im_list[r].shape[0] < post_im_list[r].shape[1]:
-            post_im_list[r] = np.rot90(post_im_list[r], 3)
+for ind, img in enumerate(rawimgs_dir):
+    if img.endswith('dng'):
+        raw_in_list.append(rawpy.imread(img))
+        post_im_list.append(raw_in_list[ind].postprocess(use_camera_wb=True))
+        if post_im_list[ind].shape[0] < post_im_list[ind].shape[1]:
+            post_im_list[ind] = np.rot90(post_im_list[ind], 3)
             print("Note: horizontal images detected. Inspect orientation.")
     else:
-        post_im_list.append(Image.open(rawimgs_dir[r]))
-        if post_im_list[r].size[0] > post_im_list[r].size[1]:
-            post_im_list[r] = post_im_list[r].rotate(90)
+        raw_in_list.append(Image.open(img))
+        post_im_list.append(Image.open(img))
+        if post_im_list[ind].size[0] > post_im_list[ind].size[1]:
+            post_im_list[ind] = post_im_list[ind].rotate(90)
             print("Note: horizontal images detected. Inspect orientation.")
 
 # Save images as PNG full-size.
