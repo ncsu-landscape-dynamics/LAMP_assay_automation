@@ -20,12 +20,12 @@ class four_chs(torch.utils.data.Dataset):
         # load all image files, sorting them to
         # ensure that they are aligned
         self.imgs = list(sorted(os.listdir(os.path.join(root, "cropt")))) #"imgs_centercropped"))))
-        self.masks = list(sorted(os.listdir(os.path.join(root, "masked/crop")))) #"masks_centercropped"))))
+        self.masks = list(sorted(os.listdir(os.path.join(root, "cropdmask")))) #"masks_centercropped"))))
         
     def __getitem__(self, idx):
         # load images ad masks
         img_path = os.path.join(self.root, "cropt", self.imgs[idx])
-        mask_path = os.path.join(self.root, "masked/crop", self.masks[idx])
+        mask_path = os.path.join(self.root, "cropdmask", self.masks[idx])
         img = Image.open(img_path).convert("RGB")
         # note that we haven't converted the mask to RGB,
         # because each color corresponds to a different instance
@@ -140,19 +140,19 @@ def get_model_instance_segmentation(num_classes):
 
 from engine import train_one_epoch, evaluate
 import utils
-import transforms as T
-
+import transforms as det_transforms
+import torchvision.transforms as transforms
 
 def get_transform(train):
-    transforms = []
+    transforms_l = []
     # converts the image, a PIL image, into a PyTorch Tensor
-    transforms.append(T.PILToTensor())
-    #transform.append(T.Normalize())
+    transforms_l.append(transforms.PILToTensor())
+    #transform_l.append(transforms.Normalize())
     if train:
         # during training, randomly flip the training images
         # and ground-truth for data augmentation
-        transform.append(T.RandomHorizontalFlip(0.5))
-    return T.Compose(transform)
+        transforms_l.append(transforms.RandomHorizontalFlip(0.5))
+    return transforms.Compose(transforms_l)
 
 
 model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=True)

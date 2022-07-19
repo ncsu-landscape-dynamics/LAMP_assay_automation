@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 certifi==*
 charset-normalizer==*
 cycler==*
