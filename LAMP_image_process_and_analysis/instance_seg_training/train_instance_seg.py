@@ -146,12 +146,13 @@ import transforms as T
 def get_transform(train):
     transforms = []
     # converts the image, a PIL image, into a PyTorch Tensor
-    transforms.append([T.PILToTensor(), T.Normalize()])
+    transforms.append(T.PILToTensor())
+    #transform.append(T.Normalize())
     if train:
         # during training, randomly flip the training images
         # and ground-truth for data augmentation
-        transforms.append(T.RandomHorizontalFlip(0.5))
-    return T.Compose(transforms)
+        transform.append(T.RandomHorizontalFlip(0.5))
+    return T.Compose(transform)
 
 
 model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=True)
