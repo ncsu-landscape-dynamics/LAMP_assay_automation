@@ -19,13 +19,13 @@ class four_chs(torch.utils.data.Dataset):
         self.target_transform = target_transform
         # load all image files, sorting them to
         # ensure that they are aligned
-        self.imgs = list(sorted(os.listdir(os.path.join(root, "cropt")))) #"imgs_centercropped"))))
-        self.masks = list(sorted(os.listdir(os.path.join(root, "masked/crop")))) #"masks_centercropped"))))
+        self.imgs = list(sorted(os.listdir(os.path.join(root, "crop")))) #"imgs_centercropped"))))
+        self.masks = list(sorted(os.listdir(os.path.join(root, "mask")))) #"masks_centercropped"))))
         
     def __getitem__(self, idx):
         # load images ad masks
-        img_path = os.path.join(self.root, "cropt", self.imgs[idx])
-        mask_path = os.path.join(self.root, "masked/crop", self.masks[idx])
+        img_path = os.path.join(self.root, "crop", self.imgs[idx])
+        mask_path = os.path.join(self.root, "mask", self.masks[idx])
         img = Image.open(img_path).convert("RGB")
         # note that we haven't converted the mask to RGB,
         # because each color corresponds to a different instance
@@ -154,9 +154,11 @@ def get_transform(train):
         transform.append(T.RandomHorizontalFlip(0.5))
     return T.Compose(transform)
 
+dir_in = input('Provide the root path to the image and mask.\nNote for Windows, use /\
+ as the separator and\nput \'\' around the whole path for either OS.\n')
 
 model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=True)
-dataset = four_chs(root = '/home/nightjar/Downloads/', transforms = get_transform(train=True))   
+dataset = four_chs(root = dir_in, transforms = get_transform(train=True))   
 
 data_loader = torch.utils.data.DataLoader(
  dataset, batch_size=1, shuffle=True, num_workers=2,
