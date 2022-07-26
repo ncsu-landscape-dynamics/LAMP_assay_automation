@@ -12,20 +12,31 @@ import matplotlib.image as mpimg
 from git.repo.base import Repo
 import shutil
 
-class four_chs(torch.utils.data.Dataset):
+# Update this path to the folder with images and masks
+dir_in = input('Provide the root path to the image and mask.\nNote for Windows, use \'\\\'\
+ as the separator and\nput \'\' around the path.\n')
+
+mask_dir = input('Provide name of folder with masks.\nThey should\
+ already be cropped.\nFor Windows, put \'\' around the whole path for either OS.\n')
+
+imag_dir = input('Provide name of folder with images.\nThey should already\
+ be cropped.\nFor Windows, put \'\' around the whole path for either OS.\n')
+
+
+class sensor_image(torch.utils.data.Dataset):
     def __init__(self, root, transforms=None, target_transform=None):
         self.root = root
         self.transforms = transforms
         self.target_transform = target_transform
         # load all image files, sorting them to
         # ensure that they are aligned
-        self.imgs = list(sorted(os.listdir(os.path.join(root, "crop")))) #"imgs_centercropped"))))
-        self.masks = list(sorted(os.listdir(os.path.join(root, "mask")))) #"masks_centercropped"))))
+        self.imgs = list(sorted(os.listdir(os.path.join(root, imag_dir))))
+        self.masks = list(sorted(os.listdir(os.path.join(root, mask_dir))))
         
     def __getitem__(self, idx):
         # load images ad masks
-        img_path = os.path.join(self.root, "crop", self.imgs[idx])
-        mask_path = os.path.join(self.root, "mask", self.masks[idx])
+        img_path = os.path.join(self.root, imag_dir, self.imgs[idx])
+        mask_path = os.path.join(self.root, mask_dir, self.masks[idx])
         img = Image.open(img_path).convert("RGB")
         # note that we haven't converted the mask to RGB,
         # because each color corresponds to a different instance
@@ -38,10 +49,12 @@ class four_chs(torch.utils.data.Dataset):
         obj_ids = np.unique(mask)
         # first is background, other values are noise, removed them
         obj_ids = obj_ids[-4:]
+        #print("objid", obj_ids)
         
         # split the color-encoded mask into a set
         # of binary masks
         masks = mask == obj_ids[:, None, None]
+        #print("masks", masks)
         
         # get bounding box coordinates for each mask
         num_objs = len(obj_ids)
@@ -53,17 +66,21 @@ class four_chs(torch.utils.data.Dataset):
             ymin = np.min(pos[0])
             ymax = np.max(pos[0])
             boxes.append([xmin, ymin, xmax, ymax])
-        
+         
         boxes = torch.as_tensor(boxes, dtype=torch.float32)
+        #print("boxes", boxes)
         # there is only one class
         labels = torch.ones((num_objs,), dtype=torch.int64)
+        #print("labels", labels)
         masks = torch.as_tensor(masks, dtype=torch.uint8)
+        #print("masks", masks)
         
         image_id = torch.tensor([idx])
+        #print("image_id", image_id)
         area = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
         # suppose all instances are not crowd
         iscrowd = torch.zeros((num_objs,), dtype=torch.int64)
-        
+         
         target = {}
         target["boxes"] = boxes
         target["labels"] = labels
@@ -71,7 +88,7 @@ class four_chs(torch.utils.data.Dataset):
         target["image_id"] = image_id
         target["area"] = area
         target["iscrowd"] = iscrowd
-        
+         
         if self.transforms is not None:
             img, target = self.transforms(img, target)
         
@@ -80,15 +97,12 @@ class four_chs(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.imgs)
 
-#if os.path.isdir("cocoapi") == True:
-#    print("cocoapi present")
-#else:
-#    git.Git(".").clone("https://github.com/cocodataset/cocoapi.git")
 
 if os.path.isdir("vision") == True:
     print("vision present")
 else:
-    Repo.clone_from("https://github.com/pytorch/vision.git", "vision")
+    repo = Repo.clone_from("https://github.com/pytorch/vision.git", "vision", no_checkout=True)
+    repo.git.checkout("2f40a483d")
 
 shutil.copy('vision/references/detection/utils.py', 'utils.py')
 shutil.copy('vision/references/detection/transforms.py', 'transforms.py')
@@ -96,33 +110,36 @@ shutil.copy('vision/references/detection/coco_eval.py', 'coco_eval.py')
 shutil.copy('vision/references/detection/engine.py', 'engine.py')
 shutil.copy('vision/references/detection/coco_utils.py', 'coco_utils.py')
 
-# testing
-#dataset0 = four_chs(root="/content/drive/MyDrive/APHIS Farm Bill (2020Milestones)/Protocols/For John/images/New set for John/collection/four_chambers")
+from engine import train_one_epoch, evaluate
+import utils
+import transforms as oldT
+# This next line is for newer versions of PyTorch and should replace oldT.
+# It doesn't work currently with the rest of the code as the code is currently
+# designed. This will have to be revised soon.
+#import torchvision.transforms as vtransforms 
 
-# testing
-#dataset0[0]
+def get_transform(train):
+    transforms = []
+    # converts the image, a PIL image, into a PyTorch Tensor
+    transforms.append(oldT.ToTensor())
+    if train:
+        # during training, randomly flip the training images
+        # and ground-truth for data augmentation
+        transforms.append(oldT.RandomHorizontalFlip(0.5))
+    return oldT.Compose(transforms)
 
-from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
- 
-# load a model pre-trained pre-trained on COCO
-model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=True)
- 
-# replace the classifier with a new one, that has
-# num_classes which is user-defined
-num_classes = 5  # 1 class (person) + background
-# get number of input features for the classifier
-in_features = model.roi_heads.box_predictor.cls_score.in_features
-# replace the pre-trained head with a new one
-model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
 
 from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
+from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
+
+num_classes = 5
 
 
-def get_model_instance_segmentation(num_classes):
-    # load an instance segmentation model pre-trained pre-trained on COCO
-    model = torchvision.models.detection.maskrcnn_resnet50_fpn(pretrained=True)
+def get_instance_segmentation_model(num_classes):
+    # load an instance segmentation model pre-trained on COCO
+    model = torchvision.models.detection.maskrcnn_resnet50_fpn(weights=True)
     
-    # get number of input features for the classifier
+    # get the number of input features for the classifier
     in_features = model.roi_heads.box_predictor.cls_score.in_features
     # replace the pre-trained head with a new one
     model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
@@ -138,50 +155,51 @@ def get_model_instance_segmentation(num_classes):
     return model
 
 
-from engine import train_one_epoch, evaluate
-import utils
-import transforms as T
-
-
-def get_transform(train):
-    transforms = []
-    # converts the image, a PIL image, into a PyTorch Tensor
-    transforms.append(T.PILToTensor())
-    #transform.append(T.Normalize())
-    if train:
-        # during training, randomly flip the training images
-        # and ground-truth for data augmentation
-        transform.append(T.RandomHorizontalFlip(0.5))
-    return T.Compose(transform)
-
-dir_in = input('Provide the root path to the image and mask.\nNote for Windows, use /\
- as the separator and\nput \'\' around the whole path for either OS.\n')
-
-model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=True)
-dataset = four_chs(root = dir_in, transforms = get_transform(train=True))   
-
-data_loader = torch.utils.data.DataLoader(
- dataset, batch_size=1, shuffle=True, num_workers=2,
- collate_fn=utils.collate_fn)
-
-# For Training
-images,targets = next(iter(data_loader))
-images = list(image for image in images)
-targets = [{k: v for k, v in t.items()} for t in targets]
-output = model(images,targets)   # Returns losses and detections
-## For inference
-#model.eval()
-#x = [torch.rand(3, 300, 400), torch.rand(3, 500, 400)]
-#predictions = model(x)
+# Optional for testing some aspects of training.
+#import torchvision
+#from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
+#
+# load a model pre-trained pre-trained on COCO
+#model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=True)
+#
+# replace the classifier with a new one, that has
+# num_classes which is user-defined
+#num_classes = 5  # 1 class (person) + background
+# get number of input features for the classifier
+#in_features = model.roi_heads.box_predictor.cls_score.in_features
+# replace the pre-trained head with a new one
+#model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes) 
+#
+#model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=True)
+#indices = torch.randperm(len(dataset)).tolist()
+#dataset = torch.utils.data.Subset(dataset, indices[:-1])
+#
+## define training and validation data loaders
+#data_loader = torch.utils.data.DataLoader(
+#    dataset, batch_size=1, shuffle=True, num_workers=2,
+#    collate_fn=utils.collate_fn)
+#
+#images,targets = next(iter(data_loader))
+#images = list(image for image in images)
+#targets = [{k: v for k, v in t.items()} for t in targets]
+#output = model(images,targets)   # Returns losses and detections
+#
+#output  (returns:)
+#{'loss_box_reg': tensor(0.0229, grad_fn=<DivBackward0>),
+#'loss_classifier': tensor(0.0835, grad_fn=<NllLossBackward0>),
+#'loss_objectness': tensor(0.8662, grad_fn=<BinaryCrossEntropyWithLogitsBackward0>),
+#'loss_rpn_box_reg': tensor(0.4854, grad_fn=<DivBackward0>)}
+###End Optional
 
 # use our dataset and defined transformations
-dataset_test = four_chs(root = '/nt-d/projects_and_data/ncsu_data/imseg', transforms = get_transform(train=False))
+dataset = sensor_image(dir_in, get_transform(train=True))
+dataset_test = sensor_image(dir_in, get_transform(train=False))
 
 # split the dataset in train and test set
 torch.manual_seed(1)
 indices = torch.randperm(len(dataset)).tolist()
-dataset = torch.utils.data.Subset(dataset, indices[:-4])
-dataset_test = torch.utils.data.Subset(dataset_test, indices[-4:])
+dataset = torch.utils.data.Subset(dataset, indices[:-1])
+dataset_test = torch.utils.data.Subset(dataset_test, indices[-1:])
 
 # define training and validation data loaders
 data_loader = torch.utils.data.DataLoader(
@@ -194,11 +212,8 @@ data_loader_test = torch.utils.data.DataLoader(
 
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
-# our dataset has five classes
-num_classes = 2
-
 # get the model using our helper function
-model = get_model_instance_segmentation(num_classes)
+model = get_instance_segmentation_model(num_classes)
 # move model to the right device
 model.to(device)
 
