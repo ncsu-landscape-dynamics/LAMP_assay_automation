@@ -14,13 +14,17 @@ import shutil
 
 # Update this path to the folder with images and masks
 dir_in = input('Provide the root path to the image and mask.\nNote for Windows, use \'\\\'\
- as the separator and\nput \'\' around the path.\n')
+ as the separator and put \'\' around the path.\n')
 
 mask_dir = input('Provide name of folder with masks.\nThey should\
- already be cropped.\nFor Windows, put \'\' around the whole path for either OS.\n')
+ be cropped before this process.\n If they require cropping, use the \'image prep\' app.\n\
+ For Windows, use \'\\\'\
+ as the separator and put \'\' around the input.\n')
 
-imag_dir = input('Provide name of folder with images.\nThey should already\
- be cropped.\nFor Windows, put \'\' around the whole path for either OS.\n')
+imag_dir = input('Provide name of folder with images.\nThey should\
+ be cropped before this process.\n If they require cropping, use the \'image_prep\' app.\n\
+ For Windows, use \'\\\'\
+ as the separator and put \'\' around the input.\n')
 
 
 class sensor_image(torch.utils.data.Dataset):
