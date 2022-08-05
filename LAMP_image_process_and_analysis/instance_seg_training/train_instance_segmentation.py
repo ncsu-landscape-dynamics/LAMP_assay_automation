@@ -23,12 +23,28 @@ import torch.utils.data
 from PIL import Image
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+from git.repo.base import Repo
+import shutil
 
-from google.colab import drive
-drive.mount('/content/drive', force_remount=True)
+#from google.colab import drive
+#drive.mount('/content/drive', force_remount=True)
 
 # Update this path to the folder with images and masks
-img_dir = "/content/drive/MyDrive/APHIS Farm Bill (2020Milestones)/Protocols/For John/Images_new_cartridge_2022/newtraining"
+#dir_in = "/content/drive/MyDrive/APHIS Farm Bill (2020Milestones)/Protocols/For John/Images_new_cartridge_2022/newtraining"
+
+# Update this path to the folder with images and masks
+dir_in = input('Provide the root path to the image and mask.\nNote for Windows, use \'\\\'\
+ as the separator and put \'\' around the path.\n')
+
+#mask_dir = input('Provide name of folder with masks.\nThey should\
+# be cropped before this process.\n If they require cropping, use the \'image prep\' app.\n\
+# For Windows, use \'\\\'\
+# as the separator and put \'\' around the input.\n')
+
+#imag_dir = input('Provide name of folder with images.\nThey should\
+# be cropped before this process.\n If they require cropping, use the \'image_prep\' app.\n\
+# For Windows, use \'\\\'\
+# as the separator and put \'\' around the input.\n')
 
 class sensor_image(torch.utils.data.Dataset):
     def __init__(self, root, transforms=None, target_transform=None):
@@ -37,13 +53,13 @@ class sensor_image(torch.utils.data.Dataset):
         self.target_transform = target_transform
         # load all image files, sorting them to
         # ensure that they are aligned
-        self.imgs = list(sorted(os.listdir(os.path.join(root,"cropt"))))
-        self.masks = list(sorted(os.listdir(os.path.join(root,"mask"))))
+        self.imgs = list(sorted(os.listdir(os.path.join(root,"crop"))))
+        self.masks = list(sorted(os.listdir(os.path.join(root,"cropdmask"))))
         
     def __getitem__(self, idx):
         # load images ad masks
-        img_path = os.path.join(self.root, "cropt", self.imgs[idx])
-        mask_path = os.path.join(self.root, "mask", self.masks[idx])
+        img_path = os.path.join(self.root, "crop", self.imgs[idx])
+        mask_path = os.path.join(self.root, "cropdmask", self.masks[idx])
         img = Image.open(img_path).convert("RGB")
         # note that we haven't converted the mask to RGB,
         # because each color corresponds to a different instance
@@ -104,8 +120,6 @@ class sensor_image(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.imgs)
 
-!pwd
-!ls
 
 # Commented out IPython magic to ensure Python compatibility.
 # %%shell
@@ -122,20 +136,28 @@ class sensor_image(torch.utils.data.Dataset):
 # cp references/detection/engine.py ../
 # cp references/detection/coco_utils.py ../
 
-!pwd
-!ls
+if os.path.isdir("vision") == True:
+    shutil.rmtree('vision')
+    print("vision present. removing")
+#else:
 
-# Need two versionw of the vision library. This one, old, and a newer one. 
+repo = Repo.clone_from("https://github.com/pytorch/vision.git", "vision", no_checkout=True)
+repo.git.checkout("2f40a483d")
+
+shutil.copy('vision/references/detection/utils.py', 'utils_old.py')
+shutil.copy('vision/references/detection/transforms.py', 'oldTrans.py')
+shutil.copy('vision/references/detection/coco_eval.py', 'coco_eval_old.py')
+shutil.copy('vision/references/detection/engine.py', 'engine_old.py')
+shutil.copy('vision/references/detection/coco_utils.py', 'coco_utils_old.py')
+
+# Need two versions of the vision library. This one, old, and a newer one.
 # Renamed the old functions from the vision library, in order to keep things
 # distinct
-!cp coco_eval.py coco_evalold.py
-!cp coco_utils.py coco_utilsold.py
-!cp engine.py engineold.py
-!cp transforms.py oldTrans.py
-!cp utils.py utilsold.py
 
 # This is necessary
-!rm -rf vision
+#!rm -rf vision
+# or
+shutil.rmtree('vision')
 
 # Commented out IPython magic to ensure Python compatibility.
 # %%shell
@@ -153,7 +175,19 @@ class sensor_image(torch.utils.data.Dataset):
 # cp references/detection/engine.py ../
 # cp references/detection/coco_utils.py ../
 
-!ls
+if os.path.isdir("vision") == True:
+    print("first vision present")
+    shutil.rmtree('vision')
+#else:
+
+repo = Repo.clone_from("https://github.com/pytorch/vision.git", "vision")
+print("vision updated")
+
+shutil.copy('vision/references/detection/utils.py', 'utils.py')
+shutil.copy('vision/references/detection/transforms.py', 'transforms.py')
+shutil.copy('vision/references/detection/coco_eval.py', 'coco_eval.py')
+shutil.copy('vision/references/detection/engine.py', 'engine.py')
+shutil.copy('vision/references/detection/coco_utils.py', 'coco_utils.py')
 
 # Mixing the functions from the old and new vision libraries.
 # This get_transforms was the main problem, because of how
@@ -199,8 +233,8 @@ def get_instance_segmentation_model(num_classes):
     return model
 
 # use our dataset and defined transformations
-dataset = sensor_image(img_dir, get_transform(train=True))
-dataset_test = sensor_image(img_dir, get_transform(train=False))
+dataset = sensor_image(dir_in, get_transform(train=True))
+dataset_test = sensor_image(dir_in, get_transform(train=False))
 
 # Everything in this block is Optional
 #import torchvision
